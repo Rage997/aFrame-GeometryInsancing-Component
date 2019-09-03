@@ -37,7 +37,7 @@ AFRAME.registerComponent('instancing', {
     loader.load(url, onLoad)
 
   },
-  
+
   init_scene: function () {
     if (this.model !== null) { return; }
     var el = this.el;
@@ -47,34 +47,53 @@ AFRAME.registerComponent('instancing', {
     var geometry = new THREE.InstancedBufferGeometry();
     geometry.copy(this.geometry);
 
-    var translateArray = new Float32Array(number_instances*3);
-    var colorArray = new Float32Array(number_instances*3);
+    // This is a little "hack". Since we can't store a whole matrix, we store each component
+    const matrix_size = number_instances * 4
+    const model_matrix = [
+      new Float32Array(matrix_size),
+      new Float32Array(matrix_size),
+      new Float32Array(matrix_size),
+      new Float32Array(matrix_size),
+      ]
     
-    for (var i = 0; i < number_instances; i++) {
-      translateArray[i*3+0] = (Math.random() - 0.5) * 100;
-      translateArray[i*3+1] = (Math.random() - 0.5) * 100;
-      translateArray[i*3+2] = (Math.random() - 0.5) * 100;
+    for( let i = 0 ; i < model_matrix.length ; i ++ ){
+      geometry.addAttribute( 
+          `aInstanceMatrix${i}`, 
+          new THREE.InstancedBufferAttribute( model_matrix[i], 4 ) 
+      )
     }
 
-    for (var i = 0; i < number_instances; i++) {
-      colorArray[i*3+0] = Math.random();
-      colorArray[i*3+1] = Math.random();
-      colorArray[i*3+2] = Math.random();
+    // assign valus
+    for( let i = 0 ; i < number_instances ; i ++ ){
+    for ( let r = 0 ; r < 4 ; r ++ )
+    for ( let c = 0 ; c < 4 ; c ++ ){
+      model_matrix[r][i*4 + c] =  Math.random()
+    }
+  }
+
+    let color_array = new Float32Array(number_instances*3)
+    for(let i = 0; i < number_instances; i++){
+      color_array[i + 0] = Math.random()
+      color_array[i + 1] = Math.random()
+      color_array[i + 2] = Math.random()
     }
 
-    geometry.addAttribute('translate', new THREE.InstancedBufferAttribute(translateArray, 3, 1, false));
-    geometry.addAttribute('color', new THREE.InstancedBufferAttribute(colorArray, 3, 1, false));
-
+    geometry.addAttribute('color', new THREE.InstancedBufferAttribute(color_array, 3, 1, false))
+    
     var material = new THREE.ShaderMaterial({
       uniforms: {
         time: {value: 0}
       },
       vertexShader: [
-        'attribute vec3 translate;',
+        'attribute vec4 aInstanceMatrix0;',
+        'attribute vec4 aInstanceMatrix1;',
+        'attribute vec4 aInstanceMatrix2;',
+        'attribute vec4 aInstanceMatrix3;',
         'attribute vec3 color;',
         'varying vec3 vColor;',
         'void main() {',
-        '  gl_Position = projectionMatrix * modelViewMatrix * vec4( position + translate, 1.0 );',
+        'mat4 instance_matrix = mat4(aInstanceMatrix0, aInstanceMatrix1, aInstanceMatrix2, aInstanceMatrix3);',
+        '  gl_Position = projectionMatrix * modelViewMatrix * instance_matrix * vec4(position, 1.0 );',
         '  vColor = color;',
   '}'
       ].join('\n'),
