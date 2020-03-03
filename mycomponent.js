@@ -10,11 +10,20 @@ if (typeof AFRAME === 'undefined') {
 
 AFRAME.registerComponent('instancing', {
   schema: {
-    number_instances: {type: 'int', default: 10}
+    number_instances: {type: 'int', default: 10},
+    // Positions, rotation and scales are array describing
+    // the information about each instanced object
+    // TODO for know these information are not passed from above
+    // THOUGH, you cold just pass the model-world matrix here
+    positions: {type: 'array', default: []},
+    rotations: {type: 'array', default: []},
+    scales: {type: 'array', default: []}
+
   },
 
   init: function (data) {
     this.number_instances = this.data.number_instances;
+    this.positions = this.data.positions
     this.model = null;
     const loader = new THREE.GLTFLoader();
     const url = 'trex.glb';
@@ -33,11 +42,12 @@ AFRAME.registerComponent('instancing', {
     THREE.DRACOLoader.setDecoderPath('./decoder/');
     loader.setDRACOLoader(new THREE.DRACOLoader())
     
+    // NOTE: the loader is asynchronous
     loader.load(url, 
               onLoad,
               (progres) => console.log(progres),
-              (error) => console.log(error))
-
+              (error) => console.log(error)
+              )    
   },
 
   init_scene: function () {
@@ -123,7 +133,10 @@ AFRAME.registerComponent('instancing', {
         '}'
       ].join('\n')
     });
-
+    
+    // TODO: anyway to convert the material from the glb?
+    // console.log(material)
+    // console.log(this.material)
     var mesh = new THREE.Mesh(instanced_geometry, material);
     mesh.position = (0,0,0)
 
