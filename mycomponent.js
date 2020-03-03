@@ -92,14 +92,22 @@ AFRAME.registerComponent('instancing', {
     }
 
     instanced_geometry.addAttribute('color', new THREE.InstancedBufferAttribute(color_array, 3, true))
-
+    
     let pos_array = new Float32Array(number_instances*3)
     for(let i = 0; i < number_instances; i++){
-      pos_array[i + 0] = Math.random()
-      pos_array[i + 1] = Math.random()
-      pos_array[i + 2] = Math.random()
+      pos_array[i + 0] = Math.random() * 25
+      pos_array[i + 1] = Math.random() * 25
+      pos_array[i + 2] = Math.random() * 25
     }
     instanced_geometry.addAttribute("instanced_position", new THREE.InstancedBufferAttribute(pos_array, 3, true));
+    
+    let rot_array = new Float32Array(number_instances*3)
+    for(let i = 0; i < number_instances; i++){
+      rot_array[i + 0] = Math.random() * 25
+      rot_array[i + 1] = Math.random() * 25
+      rot_array[i + 2] = Math.random() * 25
+    }
+    instanced_geometry.addAttribute("instanced_rotation", new THREE.InstancedBufferAttribute(rot_array, 3, true));
     
 
     var material = new THREE.ShaderMaterial({
@@ -115,6 +123,7 @@ AFRAME.registerComponent('instancing', {
         'attribute vec4 aInstanceMatrix3;',
         '',
         'attribute vec3 instanced_position;',
+        'attribute vec3 instanced_rotation;',
         'attribute vec3 color;',
         'varying vec3 vColor;',
         '',
@@ -138,7 +147,7 @@ AFRAME.registerComponent('instancing', {
     // console.log(material)
     // console.log(this.material)
     var mesh = new THREE.Mesh(instanced_geometry, material);
-    mesh.position = (0,0,0)
+    mesh.position = (0, 0, 0)
 
     
     this.model = mesh;
